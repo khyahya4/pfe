@@ -10,6 +10,8 @@ const Register = ({ setUser }) => {
     username: "",
     email: "",
     password: "",
+    confirmPassword: "",
+    role: "gestionnaire de stock"// default role
   });
 
   // handle input change
@@ -19,21 +21,32 @@ const Register = ({ setUser }) => {
 
   // submit form
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
+  setError(""); // Clear previous errors
 
-    try {
-      const response = await api.post("/users/register", formData);
+  // Check if passwords match
+  if (formData.password !== formData.confirmPassword) {
+    return setError("Passwords do not match");
+  }
 
-      localStorage.setItem("token", response.data.token);
-      
-      setUser(response.data);
+  try {
+    // We remove confirmPassword before sending to the API
+    // so the backend only receives what it needs
+    const { confirmPassword, ...dataToSend } = formData;
 
-      navigate("/");
-    } catch (err) {
-      setError(err.response?.data?.message || "registration failed");
-    }
-  };
+    const response = await api.post("/users/register", dataToSend);
 
+    localStorage.setItem("token", response.data.token);
+    setUser(response.data);
+    if (response.data.role === "Administrateur") {
+  navigate("/admin");
+} else {
+  navigate("/ges");
+}
+  } catch (err) {
+    setError(err.response?.data?.message || "Registration failed");
+  }
+};
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-md border border-gray-200">
@@ -47,8 +60,38 @@ const Register = ({ setUser }) => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          
-          {/* Email */}
+             {/* Role Selection */}
+<div className="space-y-2">
+  <label className="block text-left text-lg font-semibold text-gray-800">
+    Type de Compte
+  </label>
+  <div className="flex items-center space-x-6">
+    <label className="flex items-center cursor-pointer">
+      <input
+        type="radio"
+        name="role"
+        value="gestionnaire de stock"
+        checked={formData.role === "gestionnaire de stock"}
+        onChange={handleChange}
+        className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+      />
+      <span className="ml-2 text-gray-700">Gestionnaire de stock</span>
+    </label>
+
+    <label className="flex items-center cursor-pointer">
+      <input
+        type="radio"
+        name="role"
+        value="Administrateur"
+        checked={formData.role === "Administrateur"}
+        onChange={handleChange}
+        className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+      />
+      <span className="ml-2 text-gray-700">Administrateur</span>
+    </label>
+  </div>
+</div>
+          {/* username */}
           <div>
             <label className="block text-left text-lg font-semibold text-gray-800 mb-2">
               Username
@@ -63,6 +106,8 @@ const Register = ({ setUser }) => {
               className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
             />
           </div>
+       
+           {/* Email */}
           <div>
             <label className="block text-left text-lg font-semibold text-gray-800 mb-2">
               Email
@@ -93,6 +138,21 @@ const Register = ({ setUser }) => {
               className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
             />
           </div>
+          {/* Confirm Password */}
+<div>
+  <label className="block text-left text-lg font-semibold text-gray-800 mb-2">
+    Confirm Password
+  </label>
+  <input
+    type="password"
+    name="confirmPassword"
+    placeholder="Confirm your password"
+    value={formData.confirmPassword}
+    onChange={handleChange}
+    required
+    className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+  />
+</div>
 
           {/* Button */}
           <button

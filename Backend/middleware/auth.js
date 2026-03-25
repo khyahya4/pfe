@@ -22,3 +22,12 @@ export const protect = async (req, res, next) => {
 //Authentication middleware to protect routes, 
 // it will check if the token is valid and if the user exists
 //Authorization : [bearer,< token>]
+
+
+// this middleware will be used to restrict access to certain routes to only admin users
+export const adminOnly = (req, res, next) => {
+  if (!req.user || req.user.role !== "Administrateur") {
+    return res.status(403).json({ message: "Access denied" });
+  }
+  next();
+};

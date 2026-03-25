@@ -1,16 +1,16 @@
 import express from "express";
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
-import { protect } from "../middleware/auth.js";
+import { protect, adminOnly } from "../middleware/auth.js";
 const router = express.Router();
 
 
 
 
 router.post("/register", async (req, res) => {
-  const { username, email, password } = req.body;
+  const { username, email, password, role } = req.body;
     try {
-        if (!username || !email || !password) {
+        if (!username || !email || !password|| !role) {
             return res.status(400).json({ message: "Please fill all the fields " });
         }
         const userExists = await User.findOne({ email });
@@ -22,12 +22,13 @@ router.post("/register", async (req, res) => {
 // this will create a new user in the database, 
 // the password will be hashed before saving 
 // it to the database because of the pre save hook we defined in the user model
-        const user = await User.create({username, email, password });
+        const user = await User.create({username, email, password,role });
         const token = generateToken(user._id);
         res.status(201).json({
             id: user._id,
             username: user.username,
             email: user.email,
+            role: user.role,
             token,
     });
   } catch (error) {
@@ -64,6 +65,7 @@ try {
     id: user._id,
     username: user.username,
      email: user.email,
+     role: user.role,
         token,
     });
 
@@ -75,6 +77,12 @@ catch (error) {
 // this route will be used to get the user data,
 router.get("/me", protect , async (req, res) => {
   res.status(200).json( req.user);
+// this route will be used to test if the user is an admin or not,
+
+  router.get("/admin-data", protect, adminOnly, (req, res) => {
+  res.json({ message: "Admin content" });
+});
+
 });
 //Generate JWT token
 const generateToken = (id) => {
